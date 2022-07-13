@@ -1,5 +1,5 @@
 # .gitignore
 
 # 忽略 特定目錄下的所有檔案
-AgriculturalLand/測試紀錄
-AgriculturalLand/AgriculturalLand/bin/Debug/Images
+ImageProcessingTool/測試紀錄
+ImageProcessingTool/ImageProcessingTool/bin/Debug/Images
