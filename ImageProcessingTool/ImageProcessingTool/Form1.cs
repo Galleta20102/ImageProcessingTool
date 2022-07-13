@@ -19,6 +19,7 @@ namespace ImageProcessingTool
     {
         static Bitmap img = new Bitmap(1, 1);
         static Bitmap img_origin = new Bitmap(1, 1);
+        Mat img_origin_Mat = new Mat();
         Bitmap cannyImg, hsvImg;
         Stack<Bitmap> StepStack = new Stack<Bitmap>();
         //當前視窗的寬度高度
@@ -127,9 +128,12 @@ namespace ImageProcessingTool
         }
         private void Form1_Resize(object sender, EventArgs e)
         {
-            float newx = (this.Width) / X; //窗體寬度縮放比例
-            float newy = (this.Height) / Y; //窗體高度縮放比例
-            setControls(newx, newy, this); //隨窗體改變控件大小
+            if (X != 0 && Y != 0)
+            {
+                float newx = (this.Width) / X; //窗體寬度縮放比例
+                float newy = (this.Height) / Y; //窗體高度縮放比例
+                setControls(newx, newy, this); //隨窗體改變控件大小
+            }
 
             float imgRateX = (float)img.Width / (float)resultImg.Width;
             float imgRateY = (float)img.Height / (float)resultImg.Height;
@@ -150,6 +154,7 @@ namespace ImageProcessingTool
                 initForm();
                 img = new Bitmap(Image.FromFile(openFileDialog1.FileName));
                 img_origin = new Bitmap(img);
+                img_origin_Mat = new Mat(openFileDialog1.FileName);
                 StepStack.Clear();
                 StepStack.Push(img);
 
@@ -875,6 +880,55 @@ namespace ImageProcessingTool
             resultImg.Image = img;
         }
 
+        private void findToolContourBtn_Click(object sender, EventArgs e)
+        {
+            Mat img_src = OpenCvSharp.Extensions.BitmapConverter.ToMat(img);
+            Mat img_contour = new Mat(img.Height, img.Width,MatType.CV_8UC3);
+            img_contour.SetTo(new Scalar(255, 255, 255));
+            OpenCvSharp.Point[][] contours;
+            HierarchyIndex[] hierarchly;
+
+            Cv2.FindContours(img_src, out contours, out hierarchly, RetrievalModes.List, ContourApproximationModes.ApproxSimple, new OpenCvSharp.Point(0, 0));
+            double areaMax = 0;
+            int targetContourIndex = 0;
+            for (int i = 0; i < contours.Length; i++)
+            {
+                //算面積並標示
+                bool isBackground = false;
+                for (int p = 0; p < contours[i].Length && isBackground == false; p++)
+                {
+                    //labelDebug.Text = Convert.ToString(contours[i][p].X);
+                    if ((contours[i][p].X < img.Width / 5 && contours[i][p].Y < img.Height / 5) || //左上角
+                        (contours[i][p].X < img.Width / 5 && contours[i][p].Y > img.Height / 5 * 4) || //左下角
+                        (contours[i][p].X > img.Width / 5 * 4 && contours[i][p].Y < img.Height / 5) || //右上角
+                        (contours[i][p].X > img.Width / 5 * 4 && contours[i][p].Y > img.Height / 5 * 4)) //右下角
+                    {
+                        isBackground = true;
+                    }
+                }
+                double area = Cv2.ContourArea(contours[i], false);
+                if (!isBackground && area > areaMax)
+                {
+                    areaMax = area;
+                    targetContourIndex = i;
+                }
+            }
+
+            //畫輪廓
+            Scalar color = new Scalar(0, 0, 255);
+            Cv2.DrawContours(img_contour, contours, targetContourIndex, color, img.Width / 400, LineTypes.Link8, hierarchly);
+            Cv2.NamedWindow("Contour", WindowMode.Normal);
+            Cv2.ImShow("Contour", img_contour);
+            //Cv2.ImShow("Contour", img_origin_Mat);
+            Cv2.WaitKey(1);
+            //試著在原圖上畫輪廓
+            Cv2.DrawContours(img_origin_Mat, contours, targetContourIndex, color, img.Width / 400, LineTypes.Link8, hierarchly);
+            //如果直接將原圖bmp轉為mat來畫圖的話，畫筆顏色會跑掉
+
+            img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(img_origin_Mat);
+            StepStack.Push(img);
+            resultImg.Image = img;
+        }
 
 
         //繪圖
@@ -1090,6 +1144,7 @@ namespace ImageProcessingTool
                 g.Dispose();
             }
         }
+
 
     }
 }
