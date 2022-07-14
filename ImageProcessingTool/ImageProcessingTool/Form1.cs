@@ -22,13 +22,13 @@ namespace ImageProcessingTool
         Mat img_origin_Mat = new Mat();
         Bitmap cannyImg, hsvImg;
         Stack<Bitmap> StepStack = new Stack<Bitmap>();
+        List<string> StepList = new List<string>();
         //當前視窗的寬度高度
         private float X, Y;
         //選取圖像
         bool isSelecting = false, startSelect = false;
         float imgRate, leftMargin, topMargin;
         System.Drawing.Point selectStartPoint;
-
 
         private void setTag(Control cons)
         {
@@ -156,7 +156,9 @@ namespace ImageProcessingTool
                 img_origin = new Bitmap(img);
                 img_origin_Mat = new Mat(openFileDialog1.FileName);
                 StepStack.Clear();
+                StepList.Clear();
                 StepStack.Push(img);
+                stepLabel.Text = "Step : ";
 
                 pictureBox1.Image = img_origin;
                 Photo_WH.Text = "" + img.Width.ToString() + "x" + img.Height.ToString();
@@ -188,10 +190,22 @@ namespace ImageProcessingTool
                 img = StepStack.Pop();
                 resultImg.Image = img;
                 StepStack.Push(img);
+                updateStepRecord("Undo");
             }
             else if (StepStack.Count == 0)
             {
                 StepStack.Push(img_origin);
+            }
+        }
+
+        private void updateStepRecord(string thisStep)
+        {
+            if(thisStep == "Undo") StepList.RemoveAt(StepList.Count-1);
+            else  StepList.Add(thisStep);
+            stepLabel.Text = "Step : " + (StepList.Count == 0 ? "" : StepList[0]);
+            for (int i = 1; i < StepList.Count; i++)
+            {
+                stepLabel.Text += " > " + StepList[i];
             }
         }
 
@@ -204,6 +218,7 @@ namespace ImageProcessingTool
 
                 img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
                 StepStack.Push(img);
+                updateStepRecord("GrayScale");
                 resultImg.Image = img;
 
             }
@@ -220,8 +235,10 @@ namespace ImageProcessingTool
             int otsuValue = getOtsu_Kmeans(img, 55, 200);
             otsuLbl.Text = "Value : " + otsuValue;
             Cv2.Threshold(matImg, matImg, otsuValue, 255, 0);
+
             img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
             StepStack.Push(img);
+            updateStepRecord("Otsu("+ otsuValue + ")");
             resultImg.Image = img;
         }
         private void thresholdBtn_Click(object sender, EventArgs e)
@@ -237,6 +254,26 @@ namespace ImageProcessingTool
 
                 img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
                 StepStack.Push(img);
+                updateStepRecord("Threshold");
+                resultImg.Image = img;
+            }
+            catch { }
+        }
+
+        private void notBtn_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Mat matImg = OpenCvSharp.Extensions.BitmapConverter.ToMat(img);
+                Cv2.Threshold(matImg, matImg, Convert.ToDouble(thresholdThresh.Text), 255, 0);
+                //Cv2.AdaptiveThreshold(matImg, matImg, 255, AdaptiveThresholdTypes.MeanC, ThresholdTypes.Binary, Convert.ToInt32(thresholdThresh.Text), -1);
+
+                //Binary Not
+                Cv2.BitwiseNot(matImg, matImg);
+
+                img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
+                StepStack.Push(img);
+                updateStepRecord("Not");
                 resultImg.Image = img;
             }
             catch { }
@@ -252,6 +289,7 @@ namespace ImageProcessingTool
 
             img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
             StepStack.Push(img);
+            updateStepRecord("Log");
             resultImg.Image = img;
         }
         private void gammaBtn_Click(object sender, EventArgs e)
@@ -273,6 +311,7 @@ namespace ImageProcessingTool
 
             img = gammaImg;
             StepStack.Push(img);
+            updateStepRecord("Gamma("+ gammaValue.Text + ")");
             resultImg.Image = img;
         }
         private void equalizeHistBtn_Click(object sender, EventArgs e)
@@ -284,6 +323,7 @@ namespace ImageProcessingTool
 
                 img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
                 StepStack.Push(img);
+                updateStepRecord("Histogram");
                 resultImg.Image = img;
             }
             catch { }
@@ -303,6 +343,7 @@ namespace ImageProcessingTool
 
                     img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
                     StepStack.Push(img);
+                    updateStepRecord("MeanFilter("+ meanFilterX.Text+ "x" + meanFilterY.Text + ")");
                     resultImg.Image = img;
                 }
             }
@@ -323,6 +364,7 @@ namespace ImageProcessingTool
 
                     img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
                     StepStack.Push(img);
+                    updateStepRecord("Gaussian(" + gaussianX.Text + "x" + gaussianY.Text + ")");
                     resultImg.Image = img;
                 }
             }
@@ -341,6 +383,7 @@ namespace ImageProcessingTool
                     Cv2.Laplacian(matImg, matImg, -1, Convert.ToInt32(laplacianKsize.Text));
                     img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
                     StepStack.Push(img);
+                    updateStepRecord("Laplacian(" + laplacianKsize.Text + ")");
                     resultImg.Image = img;
                 }
             }
@@ -368,6 +411,7 @@ namespace ImageProcessingTool
 
                     img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
                     StepStack.Push(img);
+                    updateStepRecord("Sobel(" + sobelKsize.Text + ")");
                     resultImg.Image = img;
 
                     Cv2.ImShow("X", sobelX);
@@ -391,6 +435,8 @@ namespace ImageProcessingTool
                 {
                     img = cannyImg;
                     StepStack.Push(img);
+                    updateStepRecord("Canny(T1=" + Cannythreshold1.Value +
+                                            ",T2=" + Cannythreshold2.Value + ")");
                     cannyBtn.Text = "Canny（off）";
                     Cannythreshold1.Enabled = Cannythreshold2.Enabled = false;
                 }
@@ -436,8 +482,8 @@ namespace ImageProcessingTool
                 Cv2.CvtColor(matImg, matImg, ColorConversionCodes.BGR2HSV);
 
                 img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
-                resultImg.Image = img;
-                StepStack.Push(img);
+                //resultImg.Image = img;
+                //StepStack.Push(img);
                 hsvHighH.Enabled = hsvHighS.Enabled = hsvHighV.Enabled = true;
                 hsvLowV.Enabled = hsvLowS.Enabled = hsvLowH.Enabled = true;
             }
@@ -446,6 +492,9 @@ namespace ImageProcessingTool
                 hsvBtn.Text = "HSV（off）";
                 img = hsvImg;
                 StepStack.Push(img);
+                updateStepRecord("HSV(H=" + hsvLowH.Value + "-" + hsvHighH.Value +
+                                     ",S=" + hsvLowS.Value + "-" + hsvHighS.Value +
+                                     ",V=" + hsvLowV.Value + "-" + hsvHighV.Value + ")");
                 hsvHighH.Enabled = hsvHighS.Enabled = hsvHighV.Enabled = false;
                 hsvLowV.Enabled = hsvLowS.Enabled = hsvLowH.Enabled = false;
             }
@@ -484,6 +533,8 @@ namespace ImageProcessingTool
 
                     img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
                     StepStack.Push(img);
+                    updateStepRecord("Dilation(" + dilationSizeW.Text + "x" + dilationSizeH.Text +
+                                    ",iter" + dilationIteration.Text + ")");
                     resultImg.Image = img;
                 }
             }
@@ -503,6 +554,8 @@ namespace ImageProcessingTool
 
                     img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
                     StepStack.Push(img);
+                    updateStepRecord("Erosion(" + erosionSizeW.Text + "x" + erosionSizeH.Text +
+                                    ",iter" + erosionIteration.Text + ")");
                     resultImg.Image = img;
                 }
             }
@@ -522,6 +575,8 @@ namespace ImageProcessingTool
 
                     img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
                     StepStack.Push(img);
+                    updateStepRecord("Open(" + openSizeW.Text + "x" + openSizeH.Text +
+                                    ",iter" + openIteration.Text + ")");
                     resultImg.Image = img;
                 }
             }
@@ -542,6 +597,8 @@ namespace ImageProcessingTool
 
                     img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(matImg);
                     StepStack.Push(img);
+                    updateStepRecord("Close(" + closeSizeW.Text + "x" + closeSizeH.Text +
+                                    ",iter" + closeIteration.Text + ")");
                     resultImg.Image = img;
                 }
             }
@@ -578,9 +635,12 @@ namespace ImageProcessingTool
             }
             img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(sketImg);
             StepStack.Push(img);
+            updateStepRecord("Skeletonization(" + skltSizeW.Text + "x" + skltSizeH.Text +
+                            ",MorphShape" + skltMorphShape.Text + ")");
             resultImg.Image = img;
         }
 
+        //還不能動
         private void thinningBtn_Click(object sender, EventArgs e)
         {
             Mat matImg = OpenCvSharp.Extensions.BitmapConverter.ToMat(img);
@@ -596,6 +656,7 @@ namespace ImageProcessingTool
             resultImg.Image = img;
         }
 
+        //還不能動
         private void hmBtn_Click(object sender, EventArgs e)
         {
             Mat matImg = OpenCvSharp.Extensions.BitmapConverter.ToMat(img);
@@ -655,6 +716,7 @@ namespace ImageProcessingTool
             return false;
         }
 
+        //還不能動
         private void prunBtn_Click(object sender, EventArgs e)
         {
             //Mat matImg = OpenCvSharp.Extensions.BitmapConverter.ToMat(img);
@@ -877,6 +939,7 @@ namespace ImageProcessingTool
 
             img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(img_color);
             StepStack.Push(img);
+            updateStepRecord("ConnectedComponent(" + connectedArea.Text + ")");
             resultImg.Image = img;
         }
 
@@ -922,13 +985,16 @@ namespace ImageProcessingTool
             //Cv2.ImShow("Contour", img_origin_Mat);
             Cv2.WaitKey(1);
             //試著在原圖上畫輪廓
-            Cv2.DrawContours(img_origin_Mat, contours, targetContourIndex, color, img.Width / 400, LineTypes.Link8, hierarchly);
+            Mat findToolContourMat = img_origin_Mat.Clone();
+            Cv2.DrawContours(findToolContourMat, contours, targetContourIndex, color, img.Width / 400, LineTypes.Link8, hierarchly);
             //如果直接將原圖bmp轉為mat來畫圖的話，畫筆顏色會跑掉
 
-            img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(img_origin_Mat);
+            img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(findToolContourMat);
             StepStack.Push(img);
+            updateStepRecord("FindToolContour");
             resultImg.Image = img;
         }
+
 
 
         //繪圖
@@ -954,6 +1020,7 @@ namespace ImageProcessingTool
                 img = form2.returnImgfromForm2();
                 resultImg.Image = img;
                 StepStack.Push(img);
+                updateStepRecord("EditIMG");
             }
         }
 
@@ -1068,6 +1135,7 @@ namespace ImageProcessingTool
                     Rectangle cropArea = new Rectangle((int)(startP.X), (int)(startP.Y)
                                                         , w, h);
                     tmpImg = tmpImg.Clone(cropArea, PixelFormat.Format32bppArgb);
+                    updateStepRecord("Crop");
 
                     if (selectImgBtn.ForeColor == Color.Green)
                     {
@@ -1104,6 +1172,7 @@ namespace ImageProcessingTool
                             Cv2.PutText(matImg, area.ToString(), rec.TopLeft, HersheyFonts.HersheyComplex, 1, color);
                         }
 
+                        updateStepRecord("Undo");
                         //Cv2.ImWrite("tmpImg.jpeg",matImg);
                         Cv2.NamedWindow("test", WindowMode.Normal);
                         Cv2.ImShow("test", matImg);
