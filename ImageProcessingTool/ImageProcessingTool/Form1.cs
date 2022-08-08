@@ -947,7 +947,7 @@ namespace ImageProcessingTool
         {
             Mat img_src = OpenCvSharp.Extensions.BitmapConverter.ToMat(img);
             Mat img_contour = new Mat(img.Height, img.Width,MatType.CV_8UC3);
-            img_contour.SetTo(new Scalar(255, 255, 255));
+            img_contour.SetTo(new Scalar(0, 0, 0));
             OpenCvSharp.Point[][] contours;
             HierarchyIndex[] hierarchly;
 
@@ -958,13 +958,14 @@ namespace ImageProcessingTool
             {
                 //算面積並標示
                 bool isBackground = false;
+                const int marginal = 10;
                 for (int p = 0; p < contours[i].Length && isBackground == false; p++)
                 {
                     //labelDebug.Text = Convert.ToString(contours[i][p].X);
-                    if ((contours[i][p].X < img.Width / 5 && contours[i][p].Y < img.Height / 5) || //左上角
-                        (contours[i][p].X < img.Width / 5 && contours[i][p].Y > img.Height / 5 * 4) || //左下角
-                        (contours[i][p].X > img.Width / 5 * 4 && contours[i][p].Y < img.Height / 5) || //右上角
-                        (contours[i][p].X > img.Width / 5 * 4 && contours[i][p].Y > img.Height / 5 * 4)) //右下角
+                    if ((contours[i][p].X < img.Width / marginal && contours[i][p].Y < img.Height / marginal) || //左上角
+                        (contours[i][p].X < img.Width / marginal && contours[i][p].Y > img.Height / marginal * (marginal - 1)) || //左下角
+                        (contours[i][p].X > img.Width / marginal * (marginal-1) && contours[i][p].Y < img.Height / marginal) || //右上角
+                        (contours[i][p].X > img.Width / marginal * (marginal - 1) && contours[i][p].Y > img.Height / marginal * (marginal - 1))) //右下角
                     {
                         isBackground = true;
                     }
@@ -978,18 +979,25 @@ namespace ImageProcessingTool
             }
 
             //畫輪廓
-            Scalar color = new Scalar(0, 0, 255);
-            Cv2.DrawContours(img_contour, contours, targetContourIndex, color, img.Width / 400, LineTypes.Link8, hierarchly);
-            Cv2.NamedWindow("Contour", WindowMode.Normal);
-            Cv2.ImShow("Contour", img_contour);
-            //Cv2.ImShow("Contour", img_origin_Mat);
-            Cv2.WaitKey(1);
-            //試著在原圖上畫輪廓
+            Scalar colorMask = new Scalar(255, 255, 255);
+            Scalar colorContour = new Scalar(0, 0, 255);
+
+            //單純輪廓外框
+            //Cv2.DrawContours(img_contour, contours, targetContourIndex, color, img.Width / 400, LineTypes.Link8, hierarchly);
+            //輪廓填滿
+            Cv2.DrawContours(img_contour, contours, targetContourIndex, colorMask, Cv2.FILLED , LineTypes.Link8, hierarchly);
+            
+            //在原圖上畫輪廓
             Mat findToolContourMat = img_origin_Mat.Clone();
-            Cv2.DrawContours(findToolContourMat, contours, targetContourIndex, color, img.Width / 400, LineTypes.Link8, hierarchly);
+            Cv2.DrawContours(findToolContourMat, contours, targetContourIndex, colorContour, img.Width / 400, LineTypes.Link8, hierarchly);
             //如果直接將原圖bmp轉為mat來畫圖的話，畫筆顏色會跑掉
 
-            img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(findToolContourMat);
+            Cv2.NamedWindow("Contour", WindowMode.Normal);
+            Cv2.ImShow("Contour", findToolContourMat);
+            //Cv2.ImShow("Contour", img_origin_Mat);
+            Cv2.WaitKey(1);
+
+            img = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(img_contour);
             StepStack.Push(img);
             updateStepRecord("FindToolContour");
             resultImg.Image = img;

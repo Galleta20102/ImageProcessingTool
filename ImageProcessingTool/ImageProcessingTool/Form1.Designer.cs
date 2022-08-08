@@ -1106,7 +1106,7 @@
             // editImgBtn
             // 
             this.editImgBtn.Font = new System.Drawing.Font("新細明體", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.editImgBtn.Location = new System.Drawing.Point(681, 11);
+            this.editImgBtn.Location = new System.Drawing.Point(668, 13);
             this.editImgBtn.Name = "editImgBtn";
             this.editImgBtn.Size = new System.Drawing.Size(93, 45);
             this.editImgBtn.TabIndex = 100;
@@ -1117,7 +1117,7 @@
             // selectImgBtn
             // 
             this.selectImgBtn.Font = new System.Drawing.Font("新細明體", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.selectImgBtn.Location = new System.Drawing.Point(780, 11);
+            this.selectImgBtn.Location = new System.Drawing.Point(767, 11);
             this.selectImgBtn.Name = "selectImgBtn";
             this.selectImgBtn.Size = new System.Drawing.Size(89, 45);
             this.selectImgBtn.TabIndex = 101;
@@ -1179,9 +1179,9 @@
             // cropImgBtn
             // 
             this.cropImgBtn.Font = new System.Drawing.Font("新細明體", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.cropImgBtn.Location = new System.Drawing.Point(611, 11);
+            this.cropImgBtn.Location = new System.Drawing.Point(606, 13);
             this.cropImgBtn.Name = "cropImgBtn";
-            this.cropImgBtn.Size = new System.Drawing.Size(64, 45);
+            this.cropImgBtn.Size = new System.Drawing.Size(56, 45);
             this.cropImgBtn.TabIndex = 106;
             this.cropImgBtn.Text = "🔍";
             this.cropImgBtn.UseVisualStyleBackColor = true;
@@ -1190,11 +1190,11 @@
             // findToolContourBtn
             // 
             this.findToolContourBtn.Font = new System.Drawing.Font("新細明體", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.findToolContourBtn.Location = new System.Drawing.Point(875, 11);
+            this.findToolContourBtn.Location = new System.Drawing.Point(862, 12);
             this.findToolContourBtn.Name = "findToolContourBtn";
-            this.findToolContourBtn.Size = new System.Drawing.Size(94, 45);
+            this.findToolContourBtn.Size = new System.Drawing.Size(106, 45);
             this.findToolContourBtn.TabIndex = 107;
-            this.findToolContourBtn.Text = "Find Tool Contour";
+            this.findToolContourBtn.Text = "Find Tool Contour Mask";
             this.findToolContourBtn.UseVisualStyleBackColor = true;
             this.findToolContourBtn.Click += new System.EventHandler(this.findToolContourBtn_Click);
             // 
